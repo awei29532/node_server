@@ -34,8 +34,8 @@ app.get("/", (request, res) => {
   <td>post</td>
   <td>account:帳號<br/>password:密碼</td>
   <td>{<br/>   &quot;account&quot;:&quot;user001&quot;,<br/>   &quot;password&quot;:&quot;user001&quot;<br/>}</td>
-  <td>string</td>
-  <td> </td>
+  <td>status:狀態</td>
+  <td>{<br/>   &quot;status&quot;: true<br/>}</td>
   </tr>
   <tr>
   <td>/login</td>
@@ -58,8 +58,8 @@ app.get("/", (request, res) => {
   <td>post</td>
   <td>token:令牌<br/>content:訊息內容</td>
   <td>{<br/>   &quot;token&quot;:&quot;T9NvL8qs0zjwFAtjkqzP00ZYYDK59jSsKdAH&quot;,<br/>   &quot;content&quot;:&quot;安安&quot;<br/>}</td>
-  <td>string</td>
-  <td> </td>
+  <td>status:狀態</td>
+  <td>{<br/>   &quot;status&quot;: true<br/>}</td>
   </tr>
   <tr>
   <td>/message/get</td>
@@ -73,12 +73,14 @@ app.get("/", (request, res) => {
 });
 
 app.post("/login", (request, res) => {
-  const { account, password } = request.body;
+  const data = request.body || {};
+  const account = data.account || "";
   if (!account) {
-    res.send("'account' is required!");
+    res.status(400).send("'account' is required!");
   }
+  const password = data.password || "";
   if (!password) {
-    res.send("'password' is required!");
+    res.status(400).send("'password' is required!");
   }
 
   knex
@@ -95,66 +97,65 @@ app.post("/login", (request, res) => {
           token,
         });
       }
-      res.send("account or password error!");
-    })
-    .catch((err) => res.send("Login error!\n" + err));
+      res.status(400).send("account or password error!");
+    });
 });
 
 app.post("logout", async (request, res) => {
-  const data = request.body;
+  const data = request.body || {};
   const token = data.token || "";
   if (!token) {
-    res.send("token is required!");
+    res.status(400).send("token is required!");
   }
   const user = await require("./scripts/auth").auth(token);
   if (!user) {
-    res.send("auth fail!");
+    res.status(403).send("auth fail!");
   }
   knex("user")
     .where({ id: user.id })
     .update({ token: "" })
     .then(() => {
-      res.send("logout");
+      res.send();
     });
 });
 
 app.post("/register", (request, res) => {
   const { account, password } = request.body;
   if (!account) {
-    res.send("'account' is required!");
+    res.status(400).send("'account' is required!");
   }
   if (!password) {
-    res.send("'password' is required!");
+    res.status(400).send("'password' is required!");
   }
 
   knex("user")
     .insert({ account, password })
     .then((result) => {
-      res.send("Register success!");
+      res.send({ status: true });
     })
-    .catch((err) => res.send("Register error!\n" + err));
+    .catch((err) => res.status(400).send(err.sqlMessage));
 });
 
 app.post("/message/send", async (request, res) => {
-  const data = request.body;
+  const data = request.body || {};
   const token = data.token || "";
   if (!token) {
-    res.send("token is required!");
+    res.status(400).send("token is required!");
   }
 
   const content = data.content || "";
   if (!content) {
-    res.send("content is required!");
+    res.status(400).send("content is required!");
   }
 
   const user = await require("./scripts/auth").auth(token);
   if (!user) {
-    res.send("auth fail!");
+    res.status(403).send("auth fail!");
   }
   knex("chat_room")
     .insert({ sender: user.id, content })
     .then((result) => {
-      res.send("Send success!");
+      res.send({ status: true });
     });
 });
 
