@@ -18,7 +18,7 @@ function generateToken(id, length = 36) {
     token += chars[Math.floor(Math.random() * chars.length)];
   }
 
-  knex("user").where({ id }).update({ token });
+  knex("user").where({ id }).update({ token }).then();
   return token;
 }
 
