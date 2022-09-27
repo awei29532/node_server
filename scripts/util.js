@@ -5,7 +5,7 @@ function parse(res) {
 }
 
 function dateFormat(date) {
-  return date_fns.format(date, "yyyy-MM-dd HH:mm:ss");
+  return date ? date_fns.format(new Date(date), "yyyy-MM-dd HH:mm:ss") : "";
 }
 
 module.exports = {

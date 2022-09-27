@@ -1,9 +1,8 @@
 const express = require("express");
 const app = express();
-
 const multer = require("multer");
 const forms = multer();
-
+const cors = require("cors");
 const fs = require("fs");
 
 const util = require("./scripts/util");
@@ -21,6 +20,7 @@ const knex = require("knex")({
 const port = 3000;
 
 app.use(forms.array());
+app.use(cors());
 
 app.get("/", (request, res) => {
   const file = fs.readFileSync("./html/api_doc.html", "utf-8");
@@ -115,7 +115,7 @@ app.post("/message/send", async (request, res) => {
 });
 
 app.get("/message/get", (request, res) => {
-  const data = request.query;
+  const data = request.query || {};
   const query = knex("chat_room")
     .select([
       "chat_room.id",
@@ -126,12 +126,14 @@ app.get("/message/get", (request, res) => {
     .leftJoin("user", "chat_room.sender", "user.id")
     .orderBy("chat_room.id", "desc");
 
-  if (data.startTime || "") {
-    query.where("chat_room.created_at", ">", data.startTime);
+  const startTime = data.startTime || "";
+  if (startTime) {
+    query.where("chat_room.created_at", ">", startTime);
   }
 
-  if (data.endTime || "") {
-    query.where("chat_room.created_at", "<", data.endTime);
+  const endTime = data.endTime || "";
+  if (endTime) {
+    query.where("chat_room.created_at", "<", endTime);
   }
 
   const limit = Number(data.limit || 0);
